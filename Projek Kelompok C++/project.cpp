@@ -1,70 +1,78 @@
 #include <iostream>
 #include <queue>
 #include <vector>
-#include <algorithm>
 using namespace std;
 
-struct Process {
-    string name;
+struct Proses {
+    int id;
     int burst;
-    int remaining;
-    int waiting;
-    int turnaround;
+    int sisa;
+    int tunggu = 0;
 };
 
 int main() {
-    int n, quantum;
-    cout << "Masukkan jumlah proses: ";
-    if (!(cin >> n)) return 0;
-    cout << "Masukkan quantum time: ";
+    int jumlah, quantum;
+    cout << "Jumlah proses: ";
+    cin >> jumlah;
+
+    vector<Proses> proses(jumlah);
+    for (int i = 0; i < jumlah; i++) {
+        cout << "Burst time P" << i + 1 << ": ";
+        cin >> proses[i].burst;
+        proses[i].sisa = proses[i].burst;
+        proses[i].id = i + 1;
+    }
+
+    cout << "Quantum time: ";
     cin >> quantum;
 
-    vector<Process> p(n);
-    queue<int> q;
-    for (int i = 0; i < n; i++) {
-        cout << "Nama proses: ";
-        cin >> p[i].name;
-        cout << "Burst time: ";
-        cin >> p[i].burst;
-        p[i].remaining = p[i].burst;
-        p[i].waiting = 0;
-        p[i].turnaround = 0;
-        q.push(i);
+    queue<int> antrian;
+    for (int i = 0; i < jumlah; i++) {
+        antrian.push(i);
     }
 
-    int time = 0;
-    cout << "\n=== Gantt Chart ===\n";
-    while (!q.empty()) {
-        int idx = q.front(); q.pop();
+    int waktu = 0;
+    vector<string> gantt;
 
-        int exec = std::min(p[idx].remaining, quantum);
-        cout << time << " | " << p[idx].name << " | ";
-        time += exec;
-        p[idx].remaining -= exec;
+    while (!antrian.empty()) {
+        int idx = antrian.front();
+        antrian.pop();
 
-        // Update waiting untuk proses lain yang masih belum selesai
-        for (int i = 0; i < n; i++) {
-            if (i != idx && p[i].remaining > 0) {
-                p[i].waiting += exec;
+        if (proses[idx].sisa > quantum) {
+            waktu += quantum;
+            proses[idx].sisa -= quantum;
+            gantt.push_back("P" + to_string(proses[idx].id));
+            for (int i = 0; i < jumlah; i++) {
+                if (i != idx && proses[i].sisa > 0)
+                    proses[i].tunggu += quantum;
             }
-        }
-
-        if (p[idx].remaining > 0) {
-            q.push(idx); // proses belum selesai, masuk lagi ke antrian
+            antrian.push(idx);
         } else {
-            p[idx].turnaround = time;
+            waktu += proses[idx].sisa;
+            gantt.push_back("P" + to_string(proses[idx].id));
+            for (int i = 0; i < jumlah; i++) {
+                if (i != idx && proses[i].sisa > 0)
+                    proses[i].tunggu += proses[idx].sisa;
+            }
+            proses[idx].sisa = 0;
         }
     }
-    cout << time << "\n\n";
+
+    // Tampilkan Gantt Chart
+    cout << "\nGantt Chart:\n| ";
+    for (string p : gantt) {
+        cout << p << " | ";
+    }
 
     // Hitung rata-rata waktu tunggu
-    double totalWait = 0;
-    for (int i = 0; i < n; i++) {
-        totalWait += p[i].waiting;
-        cout << p[i].name << " - Waiting: " << p[i].waiting
-             << ", Turnaround: " << p[i].turnaround << endl;
+    float totalTunggu = 0;
+    cout << "\n\nWaktu Tunggu:\n";
+    for (int i = 0; i < jumlah; i++) {
+        cout << "P" << proses[i].id << ": " << proses[i].tunggu << " ms\n";
+        totalTunggu += proses[i].tunggu;
     }
-    cout << "Rata-rata waktu tunggu: " << (totalWait / n) << endl;
+
+    cout << "\nRata-rata waktu tunggu: " << totalTunggu / jumlah << " ms\n";
 
     return 0;
 }
