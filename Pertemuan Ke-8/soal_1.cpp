@@ -76,7 +76,7 @@ int main() {
             cout << (isEmpty() ? "Stack kosong\n" : "Stack tidak kosong\n");
             break;
         case 5:
-            cout << "Jumlah elemen dalam stack: " << size() << endl;
+            cout << "Jumlah elemen: " << size() << endl;
             break;
         case 6:
             cout << "Keluar program.\n";
