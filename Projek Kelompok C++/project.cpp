@@ -2,11 +2,11 @@
 #include <queue>
 using namespace std;
 
-struct Process {
-    string name;
-    int burst;
-    int waiting;
-    int turnaround;
+struct Proses {
+    string nama;
+    int durasi;
+    int tunggu;
+    int selesai;
 };
 
 int main() {
