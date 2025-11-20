@@ -1,51 +1,71 @@
 #include <iostream>
+#include <queue>
 using namespace std;
+
+struct Process {
+    string name;
+    int burst;
+    int waiting;
+    int turnaround;
+};
 
 int main() {
     int n, quantum;
     cout << "Masukkan jumlah proses: ";
     cin >> n;
-
-    int burst[20], remaining[20], waiting[20], completion[20];
-    cout << "Masukkan burst time tiap proses:\n";
-    for (int i = 0; i < n; i++) {
-        cout << "P" << i+1 << ": ";
-        cin >> burst[i];
-        remaining[i] = burst[i];
-    }
-
     cout << "Masukkan quantum time: ";
     cin >> quantum;
 
+    queue<Process> q;
+    Process p[n];
+    for (int i = 0; i < n; i++) {
+        cout << "Nama proses: ";
+        cin >> p[i].name;
+        cout << "Burst time: ";
+        cin >> p[i].burst;
+        p[i].waiting = 0;
+        p[i].turnaround = 0;
+        q.push(p[i]);
+    }
+
     int time = 0;
-    bool done;
-    do {
-        done = true;
+    cout << "\n=== Gantt Chart ===\n";
+    while (!q.empty()) {
+        Process cur = q.front();
+        q.pop();
+
+        int exec = min(cur.burst, quantum);
+        cout << time << " | " << cur.name << " | ";
+        time += exec;
+        cur.burst -= exec;
+
+        // Update waiting & turnaround
         for (int i = 0; i < n; i++) {
-            if (remaining[i] > 0) {
-                done = false;
-                if (remaining[i] > quantum) {
-                    time += quantum;
-                    remaining[i] -= quantum;
-                } else {
-                    time += remaining[i];
-                    waiting[i] = time - burst[i]; // arrival diasumsikan 0
-                    remaining[i] = 0;
-                    completion[i] = time;
+            if (p[i].name != cur.name && p[i].burst > 0) {
+                p[i].waiting += exec;
+            }
+        }
+
+        if (cur.burst > 0) {
+            q.push(cur); // proses belum selesai, masuk lagi ke antrian
+        } else {
+            for (int i = 0; i < n; i++) {
+                if (p[i].name == cur.name) {
+                    p[i].turnaround = time;
                 }
             }
         }
-    } while (!done);
-
-    // Hitung rata-rata waiting time
-    float totalWait = 0;
-    cout << "\nHasil:\n";
-    for (int i = 0; i < n; i++) {
-        cout << "P" << i+1 << " - Waiting Time: " << waiting[i] 
-             << ", Completion: " << completion[i] << endl;
-        totalWait += waiting[i];
     }
-    cout << "Rata-rata Waiting Time = " << totalWait / n << endl;
+    cout << time << "\n";
+
+    // Hitung rata-rata waktu tunggu
+    double totalWait = 0;
+    for (int i = 0; i < n; i++) {
+        totalWait += p[i].waiting;
+        cout << p[i].name << " - Waiting: " << p[i].waiting
+             << ", Turnaround: " << p[i].turnaround << endl;
+    }
+    cout << "Rata-rata waktu tunggu: " << totalWait / n << endl;
 
     return 0;
 }
